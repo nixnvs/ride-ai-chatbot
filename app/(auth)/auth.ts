@@ -1,3 +1,4 @@
+import type { NextAuthConfig } from 'next-auth';
 import { compare } from 'bcrypt-ts';
 import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
@@ -36,7 +37,7 @@ export const {
   signIn,
   signOut,
 } = NextAuth({
-  ...authConfig,
+  ...(authConfig as NextAuthConfig),
   providers: [
     Credentials({
       credentials: {},
