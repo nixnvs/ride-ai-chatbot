@@ -9,7 +9,7 @@ import { AuthForm } from '@/components/auth-form';
 import { SubmitButton } from '@/components/submit-button';
 
 import { login, type LoginActionState } from '../actions';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 
 export default function Page() {
   const router = useRouter();
@@ -70,6 +70,14 @@ export default function Page() {
             </Link>
             {' for free.'}
           </p>
+
+          <button
+            type="button"
+            onClick={() => signIn('guest')}
+            className="w-full bg-transparent border border-input dark:border-zinc-600 rounded-md px-3 py-2 text-sm font-semibold text-foreground shadow-sm hover:bg-accent/40 transition"
+          >
+            Continue as Guest
+          </button>
         </AuthForm>
       </div>
     </div>
