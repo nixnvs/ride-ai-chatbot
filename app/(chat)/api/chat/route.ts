@@ -93,16 +93,11 @@ export async function POST(request: Request) {
     }
 
     const chat = await getChatById({ id });
-
     if (!chat) {
-      const title = await generateTitleFromUserMessage({
-        message,
-      });
-
       await saveChat({
         id,
         userId: session.user.id,
-        title,
+        title: 'New Chat',
         visibility: selectedVisibilityType,
       });
     } else {
@@ -140,27 +135,6 @@ export async function POST(request: Request) {
         },
       ],
     });
-
-    // Enviar mensaje del usuario al webhook de N8N
-    try {
-      await fetch(
-        'https://jmcingbiomedico.app.n8n.cloud/webhook/e23fbe2d-f34f-4443-8571-1056046b90c8/chat',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            chat_id: id,
-            user_id: session.user.id,
-            message: message.parts,
-            timestamp: new Date().toISOString(),
-          }),
-        },
-      );
-    } catch (err) {
-      console.error('Error enviando al webhook de N8N:', err);
-    }
 
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
@@ -223,6 +197,26 @@ export async function POST(request: Request) {
                     },
                   ],
                 });
+                // Enviar mensaje del usuario al webhook de N8N
+                try {
+                  await fetch(
+                    'https://jmcingbiomedico.app.n8n.cloud/webhook/e23fbe2d-f34f-4443-8571-1056046b90c8/chat',
+                    {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        chat_id: id,
+                        user_id: session.user.id,
+                        message: message.parts,
+                        timestamp: new Date().toISOString(),
+                      }),
+                    },
+                  );
+                } catch (err) {
+                  console.error('Error enviando al webhook de N8N:', err);
+                }
               } catch (_) {
                 console.error('Failed to save chat');
               }
@@ -258,10 +252,6 @@ export async function POST(request: Request) {
     if (error instanceof ChatSDKError) {
       return error.toResponse();
     }
-
-    console.error('Error inesperado en /api/chat:', error);
-
-    return new Response('Internal Server Error', { status: 500 });
   }
 }
 
