@@ -20,6 +20,8 @@ import { useSearchParams } from 'next/navigation';
 import { useChatVisibility } from '@/hooks/use-chat-visibility';
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { ChatSDKError } from '@/lib/errors';
+import { GlassPanel } from '@/components/ui/GlassPanel';
+import Image from 'next/image';
 
 export function Chat({
   id,
@@ -117,47 +119,56 @@ export function Chat({
   });
 
   return (
-    <>
-      <div className="flex flex-col min-w-0 h-dvh bg-background">
-        <ChatHeader
-          chatId={id}
-          selectedModelId={initialChatModel}
-          selectedVisibilityType={initialVisibilityType}
-          isReadonly={isReadonly}
-          session={session}
-        />
-
-        <Messages
-          chatId={id}
-          status={status}
-          votes={votes}
-          messages={messages}
-          setMessages={setMessages}
-          reload={reload}
-          isReadonly={isReadonly}
-          isArtifactVisible={isArtifactVisible}
-        />
-
-        <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
-          {!isReadonly && (
-            <MultimodalInput
+    <div className="flex flex-col min-h-screen items-center justify-center bg-gradient-to-br from-white to-zinc-100">
+      <GlassPanel className="w-full max-w-3xl my-8">
+        <div className="flex flex-col items-center">
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/images/logo.png"
+              alt="Ride Logo"
+              width={64}
+              height={64}
+            />
+          </div>
+          <div className="flex flex-col min-w-0 h-dvh bg-transparent w-full">
+            <ChatHeader
               chatId={id}
-              input={input}
-              setInput={setInput}
-              handleSubmit={handleSubmit}
+              selectedModelId={initialChatModel}
+              selectedVisibilityType={initialVisibilityType}
+              isReadonly={isReadonly}
+              session={session}
+            />
+            <Messages
+              chatId={id}
               status={status}
-              stop={stop}
-              attachments={attachments}
-              setAttachments={setAttachments}
+              votes={votes}
               messages={messages}
               setMessages={setMessages}
-              append={append}
-              selectedVisibilityType={visibilityType}
+              reload={reload}
+              isReadonly={isReadonly}
+              isArtifactVisible={isArtifactVisible}
             />
-          )}
-        </form>
-      </div>
-
+            <form className="flex mx-auto px-4 pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
+              {!isReadonly && (
+                <MultimodalInput
+                  chatId={id}
+                  input={input}
+                  setInput={setInput}
+                  handleSubmit={handleSubmit}
+                  status={status}
+                  stop={stop}
+                  attachments={attachments}
+                  setAttachments={setAttachments}
+                  messages={messages}
+                  setMessages={setMessages}
+                  append={append}
+                  selectedVisibilityType={visibilityType}
+                />
+              )}
+            </form>
+          </div>
+        </div>
+      </GlassPanel>
       <Artifact
         chatId={id}
         input={input}
@@ -175,6 +186,6 @@ export function Chat({
         isReadonly={isReadonly}
         selectedVisibilityType={visibilityType}
       />
-    </>
+    </div>
   );
 }

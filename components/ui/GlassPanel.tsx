@@ -1,5 +1,4 @@
 import React from 'react';
-
 export function GlassPanel({
   children,
   className = '',
