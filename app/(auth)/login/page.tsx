@@ -1,45 +1,45 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useActionState, useEffect, useState } from 'react';
-import { toast } from '@/components/toast';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useState } from "react";
+import { toast } from "@/components/toast";
 
-import { AuthForm } from '@/components/auth-form';
-import { SubmitButton } from '@/components/submit-button';
+import { AuthForm } from "@/components/auth-form";
+import { SubmitButton } from "@/components/submit-button";
 
-import { login, type LoginActionState } from '../actions';
-import { useSession, signIn } from 'next-auth/react';
-import { GlassPanel } from '@/components/ui/GlassPanel';
-import { RideHeader } from '@/components/ride-header';
+import { login, type LoginActionState } from "../actions";
+import { useSession, signIn } from "next-auth/react";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { RideHeader } from "@/components/ride-header";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isSuccessful, setIsSuccessful] = useState(false);
 
   const [state, formAction] = useActionState<LoginActionState, FormData>(
     login,
     {
-      status: 'idle',
+      status: "idle",
     },
   );
 
   const { update: updateSession } = useSession();
 
   useEffect(() => {
-    if (state.status === 'failed') {
+    if (state.status === "failed") {
       toast({
-        type: 'error',
-        description: 'Invalid credentials!',
+        type: "error",
+        description: "Invalid credentials!",
       });
-    } else if (state.status === 'invalid_data') {
+    } else if (state.status === "invalid_data") {
       toast({
-        type: 'error',
-        description: 'Failed validating your submission!',
+        type: "error",
+        description: "Failed validating your submission!",
       });
-    } else if (state.status === 'success') {
+    } else if (state.status === "success") {
       setIsSuccessful(true);
       updateSession();
       router.refresh();
@@ -47,7 +47,7 @@ export default function LoginPage() {
   }, [state.status]);
 
   const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get('email') as string);
+    setEmail(formData.get("email") as string);
     formAction(formData);
   };
 
@@ -72,12 +72,12 @@ export default function LoginPage() {
               >
                 Sign up
               </Link>
-              {' for free.'}
+              {" for free."}
             </p>
 
             <button
               type="button"
-              onClick={() => signIn('guest')}
+              onClick={() => signIn("guest")}
               className="w-full bg-transparent border border-input dark:border-zinc-600 rounded-md px-3 py-2 text-sm font-semibold text-foreground shadow-sm hover:bg-accent/40 transition"
             >
               Continue as Guest
