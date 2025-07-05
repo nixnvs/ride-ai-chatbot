@@ -54,11 +54,15 @@ function getStreamContext() {
 }
 
 export async function POST(request: Request) {
+  console.log('[chat] Received POST request');
   let requestBody: PostRequestBody;
   try {
     const json = await request.json();
+    console.log('[chat] Parsed JSON:', json);
     requestBody = postRequestBodySchema.parse(json);
-  } catch (_) {
+    console.log('[chat] Parsed body:', requestBody);
+  } catch (e) {
+    console.error('[chat] Error parsing request body', e);
     return new ChatSDKError('bad_request:api').toResponse();
   }
 
@@ -66,6 +70,7 @@ export async function POST(request: Request) {
     const { id, message, selectedChatModel, selectedVisibilityType } =
       requestBody;
     const session = await auth();
+    console.log('[chat] session:', session);
 
     if (!session?.user)
       return new ChatSDKError('unauthorized:chat').toResponse();
@@ -76,11 +81,15 @@ export async function POST(request: Request) {
       differenceInHours: 24,
     });
 
+    console.log('[chat] message count:', messageCount);
+
     if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
     const chat = await getChatById({ id });
+    console.log('[chat] chat:', chat);
+
     if (!chat) {
       await saveChat({
         id,
