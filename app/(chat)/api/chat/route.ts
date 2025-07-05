@@ -30,8 +30,6 @@ import {
   type ResumableStreamContext,
 } from 'resumable-stream';
 import { after } from 'next/server';
-import type { Chat } from '@/lib/db/schema';
-import { differenceInSeconds } from 'date-fns';
 import { ChatSDKError } from '@/lib/errors';
 
 export const maxDuration = 60;
@@ -41,9 +39,7 @@ let globalStreamContext: ResumableStreamContext | null = null;
 function getStreamContext() {
   if (!globalStreamContext) {
     try {
-      globalStreamContext = createResumableStreamContext({
-        waitUntil: after,
-      });
+      globalStreamContext = createResumableStreamContext({ waitUntil: after });
     } catch (error: any) {
       if (error.message.includes('REDIS_URL')) {
         console.log(
@@ -59,11 +55,9 @@ function getStreamContext() {
 
 export async function POST(request: Request) {
   let requestBody: PostRequestBody;
-
   try {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
-    console.log('✔️ Parsed request body:', requestBody);
   } catch (_) {
     return new ChatSDKError('bad_request:api').toResponse();
   }
@@ -72,21 +66,21 @@ export async function POST(request: Request) {
     const { id, message, selectedChatModel, selectedVisibilityType } =
       requestBody;
     const session = await auth();
+
     if (!session?.user)
       return new ChatSDKError('unauthorized:chat').toResponse();
-
-    console.log('✔️ Authenticated user:', session.user.id);
 
     const userType: UserType = session.user.type;
     const messageCount = await getMessageCountByUserId({
       id: session.user.id,
       differenceInHours: 24,
     });
+
     if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
       return new ChatSDKError('rate_limit:chat').toResponse();
     }
 
-    const chat: Chat = await getChatById({ id });
+    const chat = await getChatById({ id });
     if (!chat) {
       await saveChat({
         id,
@@ -94,14 +88,14 @@ export async function POST(request: Request) {
         title: 'New Chat',
         visibility: selectedVisibilityType,
       });
-      console.log('💾 Saved new chat');
+      console.log('[chat] Saved new chat');
     } else if (chat.userId !== session.user.id) {
       return new ChatSDKError('forbidden:chat').toResponse();
     }
 
     const previousMessages = await getMessagesByChatId({ id });
     const messages = appendClientMessage({
-      // @ts-expect-error
+      // @ts-expect-error: type conversion needed
       messages: previousMessages,
       message,
     });
@@ -121,13 +115,14 @@ export async function POST(request: Request) {
         },
       ],
     });
-    console.log('�� User message saved');
 
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
 
     const stream = createDataStream({
       execute: (dataStream) => {
+        console.log('[stream] Starting stream...');
+
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
@@ -151,47 +146,56 @@ export async function POST(request: Request) {
             requestSuggestions: requestSuggestions({ session, dataStream }),
           },
           onFinish: async ({ response }) => {
-            try {
-              const assistantId = getTrailingMessageId({
-                messages: response.messages.filter(
-                  (msg) => msg.role === 'assistant',
-                ),
-              });
-              if (!assistantId) throw new Error('No assistant message found');
-              const [, assistantMessage] = appendResponseMessages({
-                messages: [message],
-                responseMessages: response.messages,
-              });
-              await saveMessages({
-                messages: [
-                  {
-                    id: assistantId,
-                    chatId: id,
-                    role: assistantMessage.role,
-                    parts: assistantMessage.parts,
-                    attachments:
-                      assistantMessage.experimental_attachments ?? [],
-                    createdAt: new Date(),
-                  },
-                ],
-              });
-              console.log('💾 Assistant message saved');
+            console.log('[stream] Finished with response:', response);
+            if (session.user?.id) {
+              try {
+                const assistantId = getTrailingMessageId({
+                  messages: response.messages.filter(
+                    (m) => m.role === 'assistant',
+                  ),
+                });
+                if (!assistantId)
+                  throw new Error('No assistant message found!');
 
-              await fetch(
-                'https://jmcingbiomedico.app.n8n.cloud/webhook/e23fbe2d-f34f-4443-8571-1056046b90c8/chat',
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    chat_id: id,
-                    user_id: session.user.id,
-                    message: message.parts,
-                    timestamp: new Date().toISOString(),
-                  }),
-                },
-              );
-            } catch (err) {
-              console.error('❌ Error in onFinish:', err);
+                const [, assistantMessage] = appendResponseMessages({
+                  messages: [message],
+                  responseMessages: response.messages,
+                });
+
+                await saveMessages({
+                  messages: [
+                    {
+                      id: assistantId,
+                      chatId: id,
+                      role: assistantMessage.role,
+                      parts: assistantMessage.parts,
+                      attachments:
+                        assistantMessage.experimental_attachments ?? [],
+                      createdAt: new Date(),
+                    },
+                  ],
+                });
+
+                try {
+                  await fetch(
+                    'https://jmcingbiomedico.app.n8n.cloud/webhook/e23fbe2d-f34f-4443-8571-1056046b90c8/chat',
+                    {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        chat_id: id,
+                        user_id: session.user.id,
+                        message: message.parts,
+                        timestamp: new Date().toISOString(),
+                      }),
+                    },
+                  );
+                } catch (err) {
+                  console.error('[webhook] Error sending to N8N:', err);
+                }
+              } catch (e) {
+                console.error('[chat] Failed to save assistant message:', e);
+              }
             }
           },
           experimental_telemetry: {
@@ -203,18 +207,23 @@ export async function POST(request: Request) {
         result.consumeStream();
         result.mergeIntoDataStream(dataStream, { sendReasoning: true });
       },
-      onError: () => 'Oops, an error occurred!',
+      onError: (err) => {
+        console.error('[stream] Error occurred:', err);
+        return 'Oops, an error occurred!';
+      },
     });
 
     const streamContext = getStreamContext();
-    return streamContext
-      ? new Response(
-          await streamContext.resumableStream(streamId, () => stream),
-        )
-      : new Response(stream);
+    if (streamContext) {
+      return new Response(
+        await streamContext.resumableStream(streamId, () => stream),
+      );
+    } else {
+      return new Response(stream);
+    }
   } catch (error) {
-    console.error('❌ Unexpected error in POST /api/chat:', error);
+    console.error('[POST handler] Unexpected error:', error);
     if (error instanceof ChatSDKError) return error.toResponse();
-    return new Response('Internal Server Error', { status: 500 });
+    return new ChatSDKError('bad_request:chat').toResponse();
   }
 }
