@@ -22,6 +22,29 @@
   }
 }
 
+/* Mobile-specific styles for the Maps interface */
+@layer components {
+  .mobile-maps-text-stroke {
+    -webkit-text-stroke-width: 0.66px;
+    -webkit-text-stroke-color: rgba(255, 255, 255, 0.80);
+  }
+
+  /* Ensure SF Pro font fallback */
+  .sf-pro {
+    font-family: 'SF Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* Hide scrollbars in mobile interface */
+  .mobile-chat-container::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-chat-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
