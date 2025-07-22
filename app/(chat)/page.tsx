@@ -1,29 +1,32 @@
-import { cookies, headers } from "next/headers";
+import { cookies, headers } from 'next/headers';
 
-import { Chat } from "@/components/chat";
-import { MobileChat } from "@/components/mobile-chat";
-import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
-import { generateUUID } from "@/lib/utils";
-import { DataStreamHandler } from "@/components/data-stream-handler";
-import { auth } from "../(auth)/auth";
-import { redirect } from "next/navigation";
+import { Chat } from '@/components/chat';
+import { MobileChat } from '@/components/mobile-chat';
+import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
+import { generateUUID } from '@/lib/utils';
+import { DataStreamHandler } from '@/components/data-stream-handler';
+import { auth } from '../(auth)/auth';
+import { redirect } from 'next/navigation';
 
 export default async function Page() {
   const session = await auth();
 
   if (!session) {
-    redirect("/api/auth/guest");
+    redirect('/api/auth/guest');
   }
 
   const id = generateUUID();
 
   const cookieStore = await cookies();
-  const modelIdFromCookie = cookieStore.get("chat-model");
+  const modelIdFromCookie = cookieStore.get('chat-model');
 
   // Check if user is on mobile
   const headersList = await headers();
-  const userAgent = headersList.get("user-agent") || "";
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+  const userAgent = headersList.get('user-agent') || '';
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      userAgent,
+    );
 
   const chatModel = modelIdFromCookie?.value || DEFAULT_CHAT_MODEL;
 
@@ -56,7 +59,8 @@ export default async function Page() {
             Experience Ride Mobile
           </h1>
           <p className="text-gray-600 mb-6">
-            Our new mobile-first interface brings you a Maps-style experience optimized for transportation and travel queries.
+            Our new mobile-first interface brings you a Maps-style experience
+            optimized for transportation and travel queries.
           </p>
           <div className="space-y-3 text-sm text-gray-500">
             <div className="flex items-center">
