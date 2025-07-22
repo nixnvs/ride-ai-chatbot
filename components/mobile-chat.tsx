@@ -1,24 +1,24 @@
-"use client";
+'use client';
 
-import type { Attachment, UIMessage } from "ai";
-import { useChat } from "@ai-sdk/react";
-import { useEffect, useState } from "react";
-import useSWR, { useSWRConfig } from "swr";
-import type { Vote } from "@/lib/db/schema";
-import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
-import { Artifact } from "./artifact";
-import { Messages } from "./messages";
-import type { VisibilityType } from "./visibility-selector";
-import { useArtifactSelector } from "@/hooks/use-artifact";
-import { unstable_serialize } from "swr/infinite";
-import { getChatHistoryPaginationKey } from "./sidebar-history";
-import { toast } from "./toast";
-import type { Session } from "next-auth";
-import { useSearchParams } from "next/navigation";
-import { useChatVisibility } from "@/hooks/use-chat-visibility";
-import { useAutoResume } from "@/hooks/use-auto-resume";
-import { ChatSDKError } from "@/lib/errors";
-import { MobileMapsInterface } from "./mobile-maps-interface";
+import type { Attachment, UIMessage } from 'ai';
+import { useChat } from '@ai-sdk/react';
+import { useEffect, useState } from 'react';
+import useSWR, { useSWRConfig } from 'swr';
+import type { Vote } from '@/lib/db/schema';
+import { fetcher, fetchWithErrorHandlers, generateUUID } from '@/lib/utils';
+import { Artifact } from './artifact';
+import { Messages } from './messages';
+import type { VisibilityType } from './visibility-selector';
+import { useArtifactSelector } from '@/hooks/use-artifact';
+import { unstable_serialize } from 'swr/infinite';
+import { getChatHistoryPaginationKey } from './sidebar-history';
+import { toast } from './toast';
+import type { Session } from 'next-auth';
+import { useSearchParams } from 'next/navigation';
+import { useChatVisibility } from '@/hooks/use-chat-visibility';
+import { useAutoResume } from '@/hooks/use-auto-resume';
+import { ChatSDKError } from '@/lib/errors';
+import { MobileMapsInterface } from './mobile-maps-interface';
 
 export function MobileChat({
   id,
@@ -38,7 +38,6 @@ export function MobileChat({
   autoResume: boolean;
 }) {
   const { mutate } = useSWRConfig();
-
   const { visibilityType } = useChatVisibility({
     chatId: id,
     initialVisibilityType,
@@ -74,28 +73,20 @@ export function MobileChat({
     },
     onError: (error) => {
       if (error instanceof ChatSDKError) {
-        toast({
-          type: "error",
-          description: error.message,
-        });
+        toast({ type: 'error', description: error.message });
       }
     },
   });
 
   const searchParams = useSearchParams();
-  const query = searchParams.get("query");
-
+  const query = searchParams.get('query');
   const [hasAppendedQuery, setHasAppendedQuery] = useState(false);
 
   useEffect(() => {
     if (query && !hasAppendedQuery) {
-      append({
-        role: "user",
-        content: query,
-      });
-
+      append({ role: 'user', content: query });
       setHasAppendedQuery(true);
-      window.history.replaceState({}, "", `/chat/${id}`);
+      window.history.replaceState({}, '', `/chat/${id}`);
     }
   }, [query, append, hasAppendedQuery, id]);
 
@@ -117,12 +108,8 @@ export function MobileChat({
 
   const handleInputSubmit = (inputText: string) => {
     if (!isReadonly && inputText.trim()) {
-      window.history.replaceState({}, "", `/chat/${id}`);
-
-      append({
-        role: "user",
-        content: inputText,
-      });
+      window.history.replaceState({}, '', `/chat/${id}`);
+      append({ role: 'user', content: inputText });
     }
   };
 
@@ -131,10 +118,9 @@ export function MobileChat({
       input={input}
       setInput={setInput}
       onInputSubmit={handleInputSubmit}
-      isLoading={status === "submitted"}
+      isLoading={status === 'submitted'}
     >
       <div className="flex flex-col h-full">
-        {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto">
           <Messages
             chatId={id}
@@ -148,7 +134,6 @@ export function MobileChat({
           />
         </div>
 
-        {/* Show welcome message if no messages */}
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center p-6">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
@@ -162,12 +147,13 @@ export function MobileChat({
             </p>
             <div className="grid grid-cols-1 gap-2 w-full max-w-xs">
               {[
-                "Route to downtown",
-                "Current traffic",
-                "Rideshare prices",
-                "Nearby parking"
+                'Route to downtown',
+                'Current traffic',
+                'Rideshare prices',
+                'Nearby parking',
               ].map((suggestion) => (
                 <button
+                  type="button"
                   key={suggestion}
                   onClick={() => handleInputSubmit(suggestion)}
                   className="p-2 text-xs bg-white/80 rounded-lg text-left hover:bg-white transition-colors border border-gray-200"
@@ -180,7 +166,6 @@ export function MobileChat({
         )}
       </div>
 
-      {/* Artifact component for any artifacts */}
       <Artifact
         chatId={id}
         input={input}
