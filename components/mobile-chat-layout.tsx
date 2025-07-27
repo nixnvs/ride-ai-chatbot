@@ -14,7 +14,24 @@ export default function ChatMobile({
     id: chatId,
     generateId: generateUUID,
     sendExtraMessageFields: true,
-    fetch: fetchWithErrorHandlers,
+    fetch: async (...args) => {
+      // Log the request body
+      if (typeof args[1]?.body === 'string') {
+        try {
+          const parsed = JSON.parse(args[1].body);
+          // eslint-disable-next-line no-console
+          console.log('[MobileChat] Sending request body:', parsed);
+        } catch {}
+      }
+      const res = await fetchWithErrorHandlers(...args);
+      // Log the response
+      try {
+        const data = await res.clone().json();
+        // eslint-disable-next-line no-console
+        console.log('[MobileChat] Received response:', data);
+      } catch {}
+      return res;
+    },
     experimental_throttle: 100,
     experimental_prepareRequestBody: (body) => ({
       id: chatId,
