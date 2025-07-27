@@ -6,7 +6,10 @@ import { generateUUID, fetchWithErrorHandlers } from '@/lib/utils';
 import { toast } from './toast';
 import { ChatSDKError } from '@/lib/errors';
 
-export default function ChatMobile({ chatId }: { chatId: string }) {
+export default function ChatMobile({
+  chatId,
+  initialChatModel,
+}: { chatId: string; initialChatModel: string }) {
   const { messages, input, setInput, handleSubmit, status, append } = useChat({
     id: chatId,
     generateId: generateUUID,
@@ -16,6 +19,7 @@ export default function ChatMobile({ chatId }: { chatId: string }) {
     experimental_prepareRequestBody: (body) => ({
       id: chatId,
       message: body.messages.at(-1),
+      selectedChatModel: initialChatModel,
     }),
     onError: (error) => {
       if (error instanceof ChatSDKError) {
@@ -32,7 +36,7 @@ export default function ChatMobile({ chatId }: { chatId: string }) {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-[#fafbfc]">
+    <div className="flex flex-col h-screen bg-[#fafbfc] max-w-[400px] mx-auto rounded-2xl shadow-lg border border-gray-200">
       {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white rounded-t-2xl">
         <button type="button" className="text-2xl">

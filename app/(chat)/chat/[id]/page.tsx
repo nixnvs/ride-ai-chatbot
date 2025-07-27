@@ -1,8 +1,9 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 
 import { auth } from '@/app/(auth)/auth';
 import { Chat } from '@/components/chat';
+import { MobileChat } from '@/components/mobile-chat';
 import { getChatById, getMessagesByChatId } from '@/lib/db/queries';
 import { DataStreamHandler } from '@/components/data-stream-handler';
 import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
@@ -54,20 +55,33 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
   const chatModelFromCookie = cookieStore.get('chat-model');
 
-  if (!chatModelFromCookie) {
+  // Check if user is on mobile
+  const headersList = await headers();
+  const userAgent = headersList.get('user-agent') || '';
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      userAgent,
+    );
+
+  const initialMessages = convertToUIMessages(messagesFromDb);
+  const initialChatModel = chatModelFromCookie?.value || DEFAULT_CHAT_MODEL;
+  const initialVisibilityType = chat.visibility;
+  const isReadonly = session?.user?.id !== chat.userId;
+
+  if (isMobile) {
     return (
-      <>
-        <Chat
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <MobileChat
           id={chat.id}
-          initialMessages={convertToUIMessages(messagesFromDb)}
-          initialChatModel={DEFAULT_CHAT_MODEL}
-          initialVisibilityType={chat.visibility}
-          isReadonly={session?.user?.id !== chat.userId}
+          initialMessages={initialMessages}
+          initialChatModel={initialChatModel}
+          initialVisibilityType={initialVisibilityType}
+          isReadonly={isReadonly}
           session={session}
           autoResume={true}
         />
         <DataStreamHandler id={id} />
-      </>
+      </div>
     );
   }
 
@@ -75,10 +89,10 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     <>
       <Chat
         id={chat.id}
-        initialMessages={convertToUIMessages(messagesFromDb)}
-        initialChatModel={chatModelFromCookie.value}
-        initialVisibilityType={chat.visibility}
-        isReadonly={session?.user?.id !== chat.userId}
+        initialMessages={initialMessages}
+        initialChatModel={initialChatModel}
+        initialVisibilityType={initialVisibilityType}
+        isReadonly={isReadonly}
         session={session}
         autoResume={true}
       />
