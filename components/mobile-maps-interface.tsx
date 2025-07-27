@@ -1,15 +1,16 @@
 'use client';
 
-// @ts-ignore: Leaflet CSS has no type declarations
-import 'leaflet/dist/leaflet.css';
+// Import Leaflet CSS from public directory (served by Next.js)
+import '/leaflet/leaflet.css';
 
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+// Import marker assets from public folder (no bundler magic)
+import markerIcon2x from '/leaflet/marker-icon-2x.png';
+import markerIcon from '/leaflet/marker-icon.png';
+import markerShadow from '/leaflet/marker-shadow.png';
 
 // Fix default marker icons
 if (typeof window !== 'undefined' && L.Icon.Default.prototype._getIconUrl) {
@@ -17,9 +18,9 @@ if (typeof window !== 'undefined' && L.Icon.Default.prototype._getIconUrl) {
   delete L.Icon.Default.prototype._getIconUrl;
 
   L.Icon.Default.mergeOptions({
-    iconRetinaUrl: markerIcon2x.src || markerIcon2x,
-    iconUrl: markerIcon.src || markerIcon,
-    shadowUrl: markerShadow.src || markerShadow,
+    iconRetinaUrl: markerIcon2x,
+    iconUrl: markerIcon,
+    shadowUrl: markerShadow,
   });
 }
 
