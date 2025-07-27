@@ -55,7 +55,7 @@ export default function ChatMobile({
   ];
 
   return (
-    <div className="relative w-full h-full min-h-screen">
+    <div className="relative w-full h-screen min-h-screen overflow-hidden">
       {/* Map as background */}
       <MobileMapsInterface />
       {/* Chat overlay as bottom sheet */}
@@ -66,17 +66,23 @@ export default function ChatMobile({
             : 'translate-y-[70%] md:translate-y-[60%] pointer-events-none'
         }`}
         style={{ right: 0 }}
+        aria-modal={showChat}
+        role="dialog"
       >
-        <div className="bg-white rounded-t-2xl shadow-lg border border-gray-200 p-0">
+        <div className="bg-white rounded-t-2xl shadow-lg border border-gray-200 p-0 flex flex-col max-h-[90vh]">
           {/* Drag handle and close button */}
           <div className="flex items-center justify-between px-4 pt-2 pb-1">
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto" />
+            <div
+              className="w-10 h-1 bg-gray-300 rounded-full mx-auto"
+              aria-label="Drag handle"
+            />
             {showChat && (
               <button
                 type="button"
                 className="text-gray-400 text-xl ml-auto"
                 onClick={() => setShowChat(false)}
                 aria-label="Minimize chat"
+                tabIndex={0}
               >
                 ⬇️
               </button>
@@ -84,7 +90,9 @@ export default function ChatMobile({
           </div>
           {/* Chat content */}
           <div
-            className={`transition-opacity duration-200 ${showChat ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            className={`transition-opacity duration-200 ${showChat ? 'opacity-100' : 'opacity-0 pointer-events-none'} overflow-y-auto flex-1`}
+            tabIndex={showChat ? 0 : -1}
+            aria-hidden={!showChat}
           >
             {/* Existing chat UI below */}
             {/* Top Bar */}
