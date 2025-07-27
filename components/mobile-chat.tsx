@@ -22,5 +22,5 @@ export function MobileChat({
   session: Session;
   autoResume: boolean;
 }) {
-  return <ChatMobileLayout chatId={id} />;
+  return <ChatMobileLayout chatId={id} initialChatModel={initialChatModel} />;
 }
